@@ -11,21 +11,31 @@ def check_set(card1,card2,card3):
         return True
     else:
         return False
+    
+#We define a function which finds all the possible sets on the table.
+#The amount of set for temporary convenience.
+#We start with card 1, 2 and 3, then we check 1, 2, 4 ... 1, 2, 12.
+#Then we check 1, 3, 4 ... 1, 3, 12 and 2, 3, 4 ... 10, 11, 12.
+#Whenever we find a set, we append this set to the list called found_sets.
+def find_sets(table):
+    found_sets=[]
+    amount_of_sets=0
+    for i in range(10):
+        for j in range(i+1,11):
+            for k in range(j+1,12):
+                if check_set(table.cards[i],table.cards[j],table.cards[k]):
+                    amount_of_sets+=1
+                    found_sets.append([str(table.cards[i]),str(table.cards[j]),str(table.cards[k])])
+    print(amount_of_sets)
+    return found_sets
 
+deck=Deck()
+table=Table()
+deck.shuffle()
+deck.move_cards(table,12)
+print(table)
+print(find_sets(table))
 
-# deck=Deck()
-# print(deck)
-# Deck.shuffle(deck)
-# print(deck)
-
-card1=Card()
-card1.shade=2
-card2=Card()
-card2.shade=1
-card3=Card()
-card3.shade=2
-print(card1,card2,card3)
-print(check_set(card1,card2,card3))
 
 
 
