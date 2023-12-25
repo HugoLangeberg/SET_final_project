@@ -29,13 +29,46 @@ def find_sets(table):
     print(amount_of_sets)
     return found_sets
 
-deck=Deck()
-table=Table()
-deck.shuffle()
-deck.move_cards(table,12)
-print(table)
-print(find_sets(table))
+def display_cards(table,screen):
+    for i in range(len(table.cards)):
+        x=50+(i%3)*100
+        y=25+(i//3)*125
+        screen.blit(table.cards[i].image, (x,y))
 
+#The function start_game, willinitialize pygame and start the game.
+def start_game():
+    pygame.init()
+    #We create a window with set size.
+    screen = pygame.display.set_mode((350,680))
+    #We need a clock for fps.
+    clock = pygame.time.Clock()
+    #We create a table with 12 cards.
+    table=Table()
+    #We start running
+    print(find_sets(table))
+    running = True
+    while running:
+        #Check for events.
+        for event in pygame.event.get():
+            #When window is closed, stop running.
+            if event.type==pygame.QUIT:
+                running=False
+        #Fill the screen with a color.
+        screen.fill("darkgreen")
+        #Render the game here.
+        # image=pygame.image.load("greendiamondempty1.gif")
+        # card1=Card(0,0,2,2)
+        # screen.blit(card1.image, (50,25))
+        display_cards(table,screen)
+        #Show it on the screen.
+        pygame.display.flip()
+        #Set frames per second.
+        clock.tick(60)
+    #Quit and clean up pygame and stop running.
+    pygame.quit()
+
+
+start_game()
 
 
 

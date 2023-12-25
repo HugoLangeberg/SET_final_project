@@ -1,4 +1,10 @@
 import random
+import pygame
+import os
+
+game_folder = os.path.dirname(__file__)  # Main folder of the game.
+cards_folder = os.path.join(game_folder, 'cards')  # Subdir cards contains card images.
+font_folder = os.path.join(game_folder, 'font')  # Subdir font contains style.
 
 #We create a class, called card. 
 #Every card has 4 properties: number, symbol, color and shading.
@@ -8,6 +14,11 @@ class Card:
         self.symbol=symbol
         self.color=color
         self.shade=shade
+        self.cardname=(Card.color_names[self.color] +
+                Card.symbol_names[self.symbol] +
+                Card.shade_names[self.shade] +
+                Card.number_names[self.number])
+        self.image=pygame.transform.scale(pygame.image.load(os.path.join(cards_folder,self.cardname+".gif")),(60,100))
 
 #The init method takes an optional parameter for each property.
 #The default card is greendiamondempty1.
@@ -24,10 +35,7 @@ class Card:
 
 #We define a str method which returns the name of the card as a string.
     def __str__(self):
-        return (Card.color_names[self.color] +
-                Card.symbol_names[self.symbol] +
-                Card.shade_names[self.shade] +
-                Card.number_names[self.number])
+        return self.cardname
         
 #We create a class called Deck. To this deck we add all 81 unique cards once.
 class Deck:
@@ -71,8 +79,11 @@ class Deck:
 #Table is the child of deck.
 class Table(Deck):
 #We define an init method to override the one in the Deck class.
-    def __init__(self, label=''):
+    def __init__(self):
         self.cards=[]
-        self.label=label
+        deck=Deck()
+        deck.shuffle()
+        deck.move_cards(self,12)
+    
 
     
