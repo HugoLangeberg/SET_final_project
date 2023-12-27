@@ -29,11 +29,30 @@ def find_sets(table):
     print(amount_of_sets)
     return found_sets
 
+#We draw the 12 cards from the table on the screen.
 def display_cards(table,screen):
     for i in range(len(table.cards)):
         x=50+(i%3)*100
         y=25+(i//3)*125
         screen.blit(table.cards[i].image, (x,y))
+
+def draw_text(surf, txt, size, color, x, y):
+    # Draw text on a surface.
+    # Font related initialisation.
+    font_name = os.path.join(font_folder, 'FreeSans.ttf')  
+    font = pygame.font.Font(font_name, size)  #Choose font.
+    text_surface = font.render(txt, True, color)  #Render text.
+    text_rect = text_surface.get_rect()
+    text_rect.midtop = (x, y) 
+    surf.blit(text_surface, text_rect)  #Blit the text.
+
+#we draw the numbers 1 to 12 on the screen in certain positions.
+def draw_numbers(table,screen):
+    for i in range(len(table.cards)):
+        x=80+(i%3)*100
+        y=130+(i//3)*125
+        draw_text(screen, str(i+1), 20, "red", x, y)
+
 
 #The function start_game, willinitialize pygame and start the game.
 def start_game():
@@ -41,7 +60,7 @@ def start_game():
     #We create a window with set size.
     screen = pygame.display.set_mode((350,680))
     #We need a clock for fps.
-    clock = pygame.time.Clock()
+    clock = pygame.time.Clock()   
     #We create a table with 12 cards.
     table=Table()
     #We start running
@@ -60,6 +79,8 @@ def start_game():
         # card1=Card(0,0,2,2)
         # screen.blit(card1.image, (50,25))
         display_cards(table,screen)
+        #We draw the numbers 1 to 12 on the screen, below the cards.
+        draw_numbers(table,screen)
         #Show it on the screen.
         pygame.display.flip()
         #Set frames per second.
