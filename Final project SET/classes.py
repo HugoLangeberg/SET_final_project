@@ -19,6 +19,7 @@ class Card:
                 Card.shade_names[self.shade] +
                 Card.number_names[self.number])
         self.image=pygame.transform.scale(pygame.image.load(os.path.join(cards_folder,self.cardname+".gif")),(60,100))
+        self.image_rect=self.image.get_rect()
 
 #The init method takes an optional parameter for each property.
 #The default card is greendiamondempty1.
@@ -84,6 +85,23 @@ class Table(Deck):
         deck=Deck()
         deck.shuffle()
         deck.move_cards(self,12)
+
+    #We draw the 12 cards from the table on the screen.
+    def display_cards(self,screen):
+        for i in range(len(self.cards)):
+            x=50+(i%3)*100
+            y=25+(i//3)*125
+            self.cards[i].image_rect.x = x
+            self.cards[i].image_rect.y = y
+            screen.blit(self.cards[i].image, (x,y))
+
+class Set():
+    def __init__(self):
+        self.cards=[]
+
+    def add_card(self, card):
+        self.cards.append(card)
+
     
 
     
