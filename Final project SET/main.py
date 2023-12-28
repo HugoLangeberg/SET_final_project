@@ -29,12 +29,7 @@ def find_sets(table):
     print(amount_of_sets)
     return found_sets
 
-#We draw the 12 cards from the table on the screen.
-def display_cards(table,screen):
-    for i in range(len(table.cards)):
-        x=50+(i%3)*100
-        y=25+(i//3)*125
-        screen.blit(table.cards[i].image, (x,y))
+
 
 def draw_text(surf, txt, size, color, x, y):
     # Draw text on a surface.
@@ -53,8 +48,14 @@ def draw_numbers(table,screen):
         y=130+(i//3)*125
         draw_text(screen, str(i+1), 20, "red", x, y)
 
+def which_card_is_selected(table,pos):
+    for i in range(len(table.cards)):
+        rect=table.cards[i].image_rect
+        if rect.collidepoint(pos):
+            return i
+    return -1
 
-#The function start_game, willinitialize pygame and start the game.
+#The function start_game, will initialize pygame and start the game.
 def start_game():
     pygame.init()
     #We create a window with set size.
@@ -63,12 +64,23 @@ def start_game():
     clock = pygame.time.Clock()   
     #We create a table with 12 cards.
     table=Table()
+
+    set=Set()
     #We start running
     print(find_sets(table))
     running = True
     while running:
         #Check for events.
         for event in pygame.event.get():
+            #Check for mouse presses on the screen.
+            if event.type==pygame.MOUSEBUTTONDOWN:
+                #Check if mouse click is on a card and return that card.
+                card_number=which_card_is_selected(table,event.pos)
+                if card_number!=-1:
+                    set.add_card(table.cards[card_number])
+                if len(set.cards)==3:
+                    print(check_set(set.cards[0],set.cards[1],set.cards[2]))
+                    set.cards.clear()
             #When window is closed, stop running.
             if event.type==pygame.QUIT:
                 running=False
@@ -78,7 +90,7 @@ def start_game():
         # image=pygame.image.load("greendiamondempty1.gif")
         # card1=Card(0,0,2,2)
         # screen.blit(card1.image, (50,25))
-        display_cards(table,screen)
+        table.display_cards(screen)
         #We draw the numbers 1 to 12 on the screen, below the cards.
         draw_numbers(table,screen)
         #Show it on the screen.
