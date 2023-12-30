@@ -1,5 +1,5 @@
 from classes import *
-
+#Hoi
 
 #We define a function which given 3 cards, returns if this is a valid set or not.
 def check_set(card1,card2,card3):
