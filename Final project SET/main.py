@@ -29,8 +29,6 @@ def find_sets(table):
     print(amount_of_sets)
     return found_sets
 
-
-
 def draw_text(surf, txt, size, color, x, y):
     # Draw text on a surface.
     # Font related initialisation.
@@ -61,9 +59,11 @@ def start_game():
     #We create a window with set size.
     screen = pygame.display.set_mode((350,680))
     #We need a clock for fps.
-    clock = pygame.time.Clock()   
+    clock = pygame.time.Clock() 
+    #We create a deck with 81 cards.
+    deck=Deck()  
     #We create a table with 12 cards.
-    table=Table()
+    table=Table(deck)
 
     set=Set()
     #We start running
@@ -79,7 +79,13 @@ def start_game():
                 if card_number!=-1:
                     set.add_card(table.cards[card_number])
                 if len(set.cards)==3:
-                    print(check_set(set.cards[0],set.cards[1],set.cards[2]))
+                    if check_set(set.cards[0],set.cards[1],set.cards[2]):
+                        #Remove these cards from the table.
+                        table.replace_cards(deck,set)
+                        print(find_sets(table))
+                    else:
+                        #Not a set, don't remove the cards.
+                        pass
                     set.cards.clear()
             #When window is closed, stop running.
             if event.type==pygame.QUIT:

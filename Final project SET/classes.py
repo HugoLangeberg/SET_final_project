@@ -80,9 +80,8 @@ class Deck:
 #Table is the child of deck.
 class Table(Deck):
 #We define an init method to override the one in the Deck class.
-    def __init__(self):
+    def __init__(self,deck):
         self.cards=[]
-        deck=Deck()
         deck.shuffle()
         deck.move_cards(self,12)
 
@@ -95,6 +94,13 @@ class Table(Deck):
             self.cards[i].image_rect.y = y
             screen.blit(self.cards[i].image, (x,y))
 
+    #We define a method to replace 3 cards, a given set-object, with cards from the deck.
+    def replace_cards(self,deck,set):
+        for i in range(len(set.cards)):
+            number_card=self.cards.index(set.cards[i])
+            self.cards[number_card]=deck.pop_card()
+
+#We create a class set. This is a list of cards (not necessarily a valid set).
 class Set():
     def __init__(self):
         self.cards=[]
