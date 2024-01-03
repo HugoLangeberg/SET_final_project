@@ -6,6 +6,7 @@ from os import path
 from set import *
 from settings import *
 from timer import *
+from button import *
 
 
 # This is the Game class that handles the running of pygame
@@ -183,11 +184,47 @@ class Game():
         pygame.display.flip()
 
     def show_start_screen(self):
+        self.button1=Button([50,50,100,20])
+        self.button2=Button([50,150,100,20])
+        self.button3=Button([50,250,100,20])
+        
+        # Game loop for introduction will play 
+        self.intro_running = True
+        while self.intro_running:
+            self.clock.tick(FPS)
+            self.button1.check_hover()
+            self.button2.check_hover()
+            self.button3.check_hover()
+            self.draw_intro()
+            for event in pygame.event.get():
+                # Check for a closing window
+                if event.type == pygame.QUIT:
+                    self.running = False
+                    self.intro_running = False
+                #Check for mouse presses on the screen.
+                elif event.type==pygame.MOUSEBUTTONUP:
+                    if self.button1.is_pressed:
+                        self.intro_running = False
+                        return
+                    elif self.button2.is_pressed:
+                        pass
+                    elif self.button3.is_pressed:
+                        self.running=False
+                        self.intro_running = False
+    
+    
+    def draw_intro(self):
         self.screen.fill(BG_COLOR)
+        self.button1.draw(self.screen)
+        self.button2.draw(self.screen)
+        self.button3.draw(self.screen)
         self.draw_text(TITLE, 48, WHITE, WIDTH / 2, HEIGHT / 4)
         self.draw_text("Press a key or click mousebutton to play", 16, WHITE, WIDTH / 2, HEIGHT * 3 / 4)
         pygame.display.flip()
-        self.wait_for_key()
+        
+
+
+       
     
     def show_game_over_screen(self):
         # game over/continue
@@ -205,6 +242,7 @@ class Game():
         while waiting:
             self.clock.tick(FPS)
             for event in pygame.event.get():
+                self.button.check_is_pressed(event)
                 if event.type == pygame.QUIT:
                     waiting = False
                     self.running = False
@@ -292,155 +330,3 @@ class Game():
             x=80+(i%3)*100
             y=130+(i//3)*125
             self.draw_text2(screen, str(i+1), 20, "red", x, y)
-
-
-
-
-
-
-"""
-    #The function start_game, will initialize pygame and start the game.
-    def start_game(self):
-        
-        #We create a timer.
-        timer_event = pygame.USEREVENT+1
-        pygame.time.set_timer(timer_event, 1000)
-        search_time=21
-        counter=search_time-1
-        text = self.basic_font.render(str(counter), True, ("white"))
-        selected_cards = ""
-        input_text = self.basic_font.render(str(selected_cards), True, ("white"))
-
-        computer_score=0
-        player_score=0
-        cards_per_row=3
-        #We create a deck with 81 cards.
-        deck=Deck()  
-        #We create a table with 12 cards.
-        table=Table(deck)
-
-        set=Set()
-        
-        #We start running
-        state="start_screen"
-        while running:
-            #Set frames per second.
-            clock.tick(60)
-            if state=="start_screen":
-                for event in pygame.event.get():
-                    if event.type==pygame.MOUSEBUTTONDOWN:
-                        state="playing"
-                    elif event.type==pygame.QUIT:
-                        running=False
-            elif state=="playing":
-                #Check for events.
-                for event in pygame.event.get():
-                    #Check for mouse presses on the screen.
-                    if event.type==pygame.MOUSEBUTTONDOWN:
-                        #Check if mouse click is on a card and return that card.
-                        card_number=which_card_is_selected(table,event.pos)
-
-                        if card_number!=-1 and table.cards[card_number] not in set.cards:    
-                            set.add_card([table.cards[card_number]])
-                            selected_cards+= str(table.cards.index(table.cards[card_number])+1)+ ", "
-                        if len(set.cards)==3:
-                            Game.start_game(game)
-                            alternate = selected_cards[:-2]
-                            selected_cards= alternate
-                            if check_set_string(selected_cards, table):
-                                #Remove these cards from the table.
-                                table.replace_cards(deck,set)
-                                player_score+=1
-                                counter=search_time  
-                                set.cards.clear() 
-                                selected_cards=""
-                            else:
-                                #Not a set, don't remove the cards.
-                                pass
-                            set.cards.clear()
-                            selected_cards=""
-                            
-                    #We have a counter that counts.
-                    elif event.type == timer_event:
-
-                        if(counter%5==0):
-                            print(f"Player score: {player_score} Computer score: {computer_score}")
-                            print(f"Deck length: {len(deck.cards)} Lengte geselecteerde set: {len(set.cards)}")
-
-                        counter -= 1
-                        text = self.basic_font.render(str(counter), True, ("white"))
-                        if counter == 0:
-                            found_sets=find_sets(table)
-                            if found_sets!=[]:
-                                table.replace_cards(deck,found_sets[0])
-                                computer_score+=1
-                            else:
-                                set=Set()
-                                for i in range (cards_per_row):
-                                    set.add_card([table.cards[i]])
-                                table.replace_cards(deck, set)
-                            counter=search_time  
-                            set.cards.clear()  
-                            selected_cards="" 
-
-
-                    elif event.type == pygame.KEYDOWN: 
-                        # Check for backspace 
-                        if event.key == pygame.K_BACKSPACE: 
-                            # get text input from 0 to -1 i.e. end.
-                            if(selected_cards!=""): 
-                                selected_cards = selected_cards[:-1] 
-            
-                        # Unicode standard is used for string 
-                        # formation 
-                        elif pygame.K_0 <= event.key <= pygame.K_9:
-                            # Convert the key code to the corresponding numeric character
-                            pressed_number = event.key - pygame.K_0
-                            selected_cards += str(pressed_number)
-                        elif event.key == pygame.K_SPACE: 
-                        
-                                selected_cards+= " "
-
-                        elif event.key == pygame.K_COMMA: 
-                            selected_cards+= ","
-
-                        elif event.key == pygame.K_RETURN: 
-                            if check_set_string(selected_cards, table):
-                                #Remove these cards from the table.
-                                set.create_set(selected_cards, table)
-                                table.replace_cards(deck,set)
-                                player_score+=1
-                                counter=search_time  
-                                set.cards.clear() 
-                                selected_cards=""
-                            else:
-                                #Not a set, don't remove the cards.
-                                pass
-                            set.cards.clear()
-                            selected_cards=""
-
-                    #When window is closed, stop running.
-                    elif event.type==pygame.QUIT:
-                        running=False
-        
-                #Fill the screen with a color.
-                self.screen.fill("darkgreen")
-                #Render the game here.
-                # image=pygame.image.load("greendiamondempty1.gif")
-                # card1=Card(0,0,2,2)
-                # screen.blit(card1.image, (50,25))
-                table.display_cards(self.screen)
-                #We draw the numbers 1 to 12 on the screen, below the cards.
-                draw_numbers(table,self.screen)
-
-                input_text = self.basic_font.render(str(selected_cards), True, ("white"))
-                self.screen.blit(input_text,(150,600))
-                self.screen.blit(text,(50,600))
-                #Show it on the screen.
-                
-
-            pygame.display.flip()
-            
-        #Quit and clean up pygame and stop running.
-        pygame.quit()
-"""
