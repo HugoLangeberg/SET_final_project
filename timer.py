@@ -13,5 +13,12 @@ class Timer:
         # Counter does countdown to zero
         self.counter=self.search_time-1
 
+    def update(self):
+        pass
+
+    def draw(self):
+        self.screen.blit(self.image, self.image_rect)
+
+
         
         
