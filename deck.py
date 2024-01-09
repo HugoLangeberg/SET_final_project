@@ -1,53 +1,53 @@
-from random import shuffle
+import pygame
 from card import *
+from gameobject import *
+from os import path
+from random import shuffle
 
-#We create a class called Deck. To this deck we add all 81 unique cards once.
-class Deck:
-    def __init__(self, center_coordinates=(0,0), screen=None, image_folder="", image=""):
-        self.screen=screen
+"""
+A Deck is a gameobject and the Deck class inherits from Gameobject
+It has a default image and some text for the amount of cards it
+currently contains.
+
+The deck contains at most 81 cards
+"""
+class Deck(Gameobject):
+    def __init__(self, screen=None, image_folder="", image_file="",
+                 center_position=(0,0), font=None, text=""):
+        # Initialize first part via the Gameobject
+        Gameobject.__init__(self, screen, image_folder, image_file, center_position, font, text)
+        # Initialize deck specific properties
         self.cards=[]
-        self.position = center_coordinates
-        self.image_folder = image_folder
-        self.image = pygame.image.load(path.join(image_folder, image))
-        self.image_rect = self.image.get_rect()
-        self.image_rect.center = center_coordinates
-        for symbol in range(3):
-            for color in range(3):
+        # Create 3*3*3*3 = 81 unique cards
+        for symbol in range(1):
+            for color in range(1):
                 for shade in range(3):
                     for number in range(3):
-                        card=Card(number,color,symbol,shade, screen, image_folder)
-                        card.set_center_position(self.position)
-                        self.cards.append(card)
+                        card=Card(number,color,symbol,shade, screen, image_folder, center_position)
+                        # Append each card to the cards list
+                        self.add_card(card)
 
-    #We also define a str method which prints the names of the cards in the order they are in the deck.
-    #Every card is printed on a new line, but it still is just one string.
     def __str__(self):
+        # This method prints the names of the cards in the order they are in the deck.
+        # Every card is printed on a new line, but it still is just one string.
         stringdeck=[]
         for card in self.cards:
             stringdeck.append(str(card))
         return "\n".join(stringdeck)
     
-    #We define a method that removes a card from the deck.
     def pop_card(self):
+        # This method removes a card from the deck.
         return self.cards.pop()
     
-    #We define a method that adds a card to the deck.
     def add_card(self, card):
+        # This method adds a card to the deck.
         self.cards.append(card)
 
-    #We define a method called shuffle, which shuffles the deck.
-    #We can call this function with Deck.shuffle() in main.
     def shuffle(self):
+        # This method shuffles the deck.
         shuffle(self.cards)
 
-    #We define a method called move_cards. 
-    #This method is used to move an amount of cards during the game. 
-    def move_cards(self,move_to,amount):
-        for i in range(amount):
-            move_to.add_card(self.pop_card())
-
-    def draw(self):
-        self.screen.blit(self.image, self.image_rect)
-
     def update(self):
-        pass
+        # Show the current number of cards in the deck
+        self.set_text(self.basic_font, str(len(self.cards)), self.text_rect.center)
+
