@@ -223,10 +223,7 @@ class Game():
         if self.set.is_valid_set_effect or self.set.is_invalid_set_effect:
             # Ignore mouse clicks during effects
             return
-        if len(self.deck.cards) == 0 and len(self.find_sets(self.table)) == 0 and len(self.set.cards) == 0:
-            # No more sets to be found and deck is empty
-            self.state = STATE_GAME_OVER
-            self.gameloop_running = False
+        if self.is_game_over():
             return
 
         #Check if mouse click is on a card and return that card.
@@ -234,6 +231,14 @@ class Game():
         self.move_card_from_table_to_set(card_number)
         # Check if this card movement results in a full set of 3 cards (either valid or invalid)
         self.process_full_set()
+
+    def is_game_over(self):
+        if len(self.deck.cards) == 0 and len(self.find_sets(self.table)) == 0 and len(self.set.cards) == 0:
+            # No more sets to be found and deck is empty
+            self.state = STATE_GAME_OVER
+            self.gameloop_running = False
+            return True
+        return False
 
     def process_full_set(self):
         if len(self.set.cards) == MAX_NUMBER_OF_CARDS_IN_SET:
@@ -319,7 +324,10 @@ class Game():
         # If player has no time left, it's time for the PC
         if self.timer.counter == 0:
             # See if player already selected 1 or 2 cards
-            if len(self.set.cards) > 0:
+            if {len(self.set.cards) > 0 and 
+                not self.set.is_invalid_set_effect and
+                not self.set.is_valid_set_effect and
+                not self.set.is_valid_set_for_pc_effect}:
                 # First get the cards from set back to table.
                 for i in range(len(self.set.cards)):
                     if self.set.cards[i] != None:
@@ -335,9 +343,6 @@ class Game():
                 found_sets=self.find_sets(self.table)
                 if found_sets!=[]:
                     # At least 1 valid set was found
-
-                    # Reset the local set, because PC will use it.
-                    self.set.cards.clear()
                     for i in range(MAX_NUMBER_OF_CARDS_IN_SET):
                         # Get card_number of each card in the first found set
                         card_number = self.table.cards.index(found_sets[0].cards[i])
@@ -346,7 +351,7 @@ class Game():
                         # Record where this card was on the table
                         self.set.cards[-1].from_position_number = card_number
                     # Play nice effect to show that computer found a valid set
-                    self.set.valid_set_for_pc_effect(FPS, FPS)
+                    self.set.valid_set_for_pc_effect(FPS, 0)
                     # Adjust score
                     self.computer_score+=1
                     # Set level, if appropriate
@@ -356,14 +361,23 @@ class Game():
                                                   self.positions[TABLE_POSITION_PC_SCORE])
                     # Get new cards from the deck on the table
                     self.table.replace_cards(self.deck)
+
                 else:
                     # No valid sets on the table
+
+                    if self.is_game_over():
+                        # It's time to move to game over state
+                        return
                     # Create an empty set and move the first 3 cards from the table to that set
                     self.set=Set(self.screen,"", self.basic_font, self.positions)
                     for i in range (MAX_NUMBER_OF_CARDS_IN_SET):
-                        self.set.add_cards([self.table.cards[i]])
+                        self.move_card_from_table_to_set(i)
+                    # self.set.invalid_set_effect(FPS/2, 0)
+                        # self.set.add_cards([self.table.cards[i]])
+                        # self.table.cards[i] = None
                     # Get 3 new cards from the deck on the table
                     self.table.replace_cards(self.deck)
+                    self.set.cards.clear()
             # Set timer back to the begin value
             self.timer.counter=self.timer.search_time 
             # Clear the string with selected cards and the single card_string
@@ -423,10 +437,12 @@ class Game():
         if self.card_string != "":
             # Convert the string to a cardnumber
             card_number = int(self.card_string)-1
-            # Get the position of this card number
-            event.pos = self.positions[card_number]
-            # Use the position to do as if it was clicked with the mouse
-            self.event_MB_UP_playing(event)
+            # Check validity of the number
+            if 0 <= card_number < MAX_NUMBER_OF_CARDS_ON_TABLE:
+                # Get the position of this card number
+                event.pos = self.positions[card_number]
+                # Use the position to do as if it was clicked with the mouse
+                self.event_MB_UP_playing(event)
             # Reset card string
             self.card_string=""
 
