@@ -16,10 +16,13 @@ class Set(Gameobject):
         # Initialize table specific items
         self.positions = positions
         self.cards=[]
+        self.cards.clear()
         self.is_valid_set_effect = False
         self.is_invalid_set_effect = False
+        self.is_valid_set_for_pc_effect = False
         self.framecount = 0
         self.stop_framecount = -1
+        self.delay = 0
 
 
     def draw(self):
@@ -38,39 +41,82 @@ class Set(Gameobject):
             # It is time to finish the valid_set_effect or invalid_set_effect
             self.is_valid_set_effect = False
             self.is_invalid_set_effect = False
+            self.is_valid_set_for_pc_effect = False
             self.framecount = 0
             self.stop_framecount = -1
+            self.delay = 0
             # Remove the text image
             self.text_image = None
             # Clear the set
             self.cards.clear()
         if self.is_valid_set_effect:
-            # During this effect, show "Valid set!"
-            self.set_text(self.basic_font, "Valid SET found!", self.positions[TABLE_POSITION_CARD2])
+            if self.framecount >= self.delay:
+                # During this effect, show "Valid set!"
+                self.set_text(self.basic_font, "You found a valid SET!", self.positions[TABLE_POSITION_CARD2])
             # self.text_rect.top = self.text_rect.top + CARD_HEIGHT/2 + self.text_rect.height/2
             self.framecount += 1
         elif self.is_invalid_set_effect:
-            # During this effect, show "Not a valid set!"
-            self.set_text(self.basic_font, "Not a valid SET!", self.positions[TABLE_POSITION_CARD2])
+            if self.framecount >= self.delay:
+                # During this effect, show "Not a valid set!"
+                self.set_text(self.basic_font, "This was NOT a valid SET!", self.positions[TABLE_POSITION_CARD2])
+            self.framecount += 1
+        elif self.is_valid_set_for_pc_effect:
+            if self.framecount >= self.delay:
+                # During this effect, show "Now I have a valid set!"
+                self.set_text(self.basic_font, "Now I have a valid SET!", self.positions[TABLE_POSITION_CARD2])
+                self.text_rect.top = self.text_rect.top + CARD_HEIGHT/2 + self.text_rect.height/2
             self.framecount += 1
 
-    def valid_set_effect(self, steps):
+
+    def valid_set_effect(self, steps, delay):
         # Show the valid set effect during N steps
         self.framecount = 0
-        self.stop_framecount = steps
+        self.delay = delay
+        self.stop_framecount = steps + delay
         # Indicate the effect is on
         self.is_valid_set_effect = True
         for i in range(MAX_NUMBER_OF_CARDS_IN_SET):
-            self.cards[i].move_effect(self.positions[TABLE_POSITION_CARD1+i], (WIDTH*3/4, HEIGHT+CARD_HEIGHT), 10, 0)
+            if len(self.cards[i].move_effects) == 0:
+                delay = FPS/4
+            else:
+                delay = 0
+            self.cards[i].move_effects.append((self.positions[TABLE_POSITION_CARD1+i],
+                                                (WIDTH*3/4, HEIGHT+CARD_HEIGHT), 10, delay))
 
-    def invalid_set_effect(self, steps):
+    def valid_set_for_pc_effect(self, steps, delay):
+        # Show the valid set effect during N steps
+        self.framecount = 0
+        self.delay = delay
+        self.stop_framecount = steps + delay
+        # Indicate the effect is on
+        self.is_valid_set_for_pc_effect = True
+        for i in range(MAX_NUMBER_OF_CARDS_IN_SET):
+            if len(self.cards[i].move_effects) == 0:
+                delay = FPS/4
+            else:
+                delay = 0
+
+            # Start move effect on the last card in the set
+            self.cards[i].move_effects.append((self.positions[self.cards[i].from_position_number],
+                                       self.positions[TABLE_POSITION_CARD1 + i],
+                                       FPS/4, delay))
+            #self.cards[i].move_effect(self.positions[TABLE_POSITION_CARD1+i], (WIDTH*3/4, 0-CARD_HEIGHT), 10, delay)
+
+    def invalid_set_effect(self, steps, delay):
         # Show the invalid set effect during N steps
         self.framecount = 0
-        self.stop_framecount = steps
+        self.delay = delay
+        self.stop_framecount = steps+delay
         # Indicate the effect is on
         self.is_invalid_set_effect = True
         for i in range(MAX_NUMBER_OF_CARDS_IN_SET):
-            self.cards[i].move_effect(self.positions[TABLE_POSITION_CARD1+i], self.cards[i].from_position, 10, 0)
+            if len(self.cards[i].move_effects) == 0:
+                delay = FPS/4
+            else:
+                delay = 0
+
+            if self.cards[i] != None:
+                self.cards[i].move_effects.append((self.positions[TABLE_POSITION_CARD1+i], self.cards[i].from_position, 10, delay))
 
     def pop_card(self):
         # This method removes a card from the set

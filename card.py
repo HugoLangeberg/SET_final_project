@@ -41,6 +41,7 @@ class Card(Gameobject):
         self.stop_framecount = 10
         self.delay = 0
         self.from_position_number = -1
+        self.move_effects = []
 
         self.cardname=(Card.color_names[self.color] +
                 Card.symbol_names[self.symbol] +
@@ -59,23 +60,42 @@ class Card(Gameobject):
         return self.cardname
     
     def update(self):
-        if self.framecount == self.stop_framecount:
-            # It is time to finish the movement of the card
-            self.is_moving = False
-            self.delta_x = 0
-            self.delta_y = 0
-            self.delay = 0
-            self.framecount = 0
-            self.stop_framecount = -1
-            # Set the end position of this card
-            self.set_center_position(self.to_position)
-            
-        if self.is_moving:
-            if self.framecount >= self.delay:
-                # Still moving, so update the X and Y coordinates of the center
-                self.image_rect.centerx = self.from_position[0] + (self.framecount-self.delay)*self.delta_x
-                self.image_rect.centery = self.from_position[1] + (self.framecount-self.delay)*self.delta_y
-            self.framecount += 1
+        if len(self.move_effects) > 0:
+            if self.framecount == self.stop_framecount:
+                # Remove the first move_effect from the list
+                self.move_effects.pop(0)
+                # Are there other move_effect left?
+                if len(self.move_effects) > 0:
+                    # Start new move_effect
+                    self.move_effect(self.move_effects[0][0],
+                                     self.move_effects[0][1],
+                                     self.move_effects[0][2],
+                                     self.move_effects[0][3])
+                else:
+                    # It is time to finish the movement of the card
+                    self.is_moving = False
+                    self.delta_x = 0
+                    self.delta_y = 0
+                    self.delay = 0
+                    self.framecount = 0
+                    self.stop_framecount = -1
+                    # Set the end position of this card
+                    self.set_center_position(self.to_position)
+                
+            if self.is_moving:
+                if self.framecount >= self.delay:
+                    # Still moving, so update the X and Y coordinates of the center
+                    self.image_rect.centerx = self.from_position[0] + (self.framecount-self.delay)*self.delta_x
+                    self.image_rect.centery = self.from_position[1] + (self.framecount-self.delay)*self.delta_y
+                self.framecount += 1
+            else:
+                # Are there other move_effect left?
+                if len(self.move_effects) > 0:
+                    # Not moving yet, start new move_effect
+                    self.move_effect(self.move_effects[0][0],
+                                        self.move_effects[0][1],
+                                        self.move_effects[0][2],
+                                        self.move_effects[0][3])
 
     def move_effect(self, from_position, to_position, steps, delay):
         # Move the card from one position to another position in N steps
