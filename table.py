@@ -55,9 +55,9 @@ class Table(Gameobject):
     # This method replaces 3 cards, a given set-object, with cards from the deck.
     def replace_cards(self,deck):
         for i in range(MAX_NUMBER_OF_CARDS_ON_TABLE):
-            if self.cards[i] == None and len(deck.cards) > 1:
+            if self.cards[i] == None and len(deck.cards) > 0:
                 self.cards[i]=deck.pop_card()
-                self.cards[i].move_effect(self.positions[TABLE_POSITION_DECK], self.positions[i], FPS/4, i*5)
+                self.cards[i].move_effects.append((self.positions[TABLE_POSITION_DECK], self.positions[i], FPS/4, FPS+i*5))
 
             # number_card=self.cards.index(set.cards[i])
             # self.cards[number_card]=deck.pop_card()

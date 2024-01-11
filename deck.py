@@ -19,8 +19,8 @@ class Deck(Gameobject):
         # Initialize deck specific properties
         self.cards=[]
         # Create 3*3*3*3 = 81 unique cards
-        for symbol in range(1):
-            for color in range(1):
+        for symbol in range(3):
+            for color in range(3):
                 for shade in range(3):
                     for number in range(3):
                         card=Card(number,color,symbol,shade, screen, image_folder, center_position)

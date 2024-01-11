@@ -10,14 +10,17 @@ IMAGE_SUBFOLDER                     = "images"
 BG_COLOR                            = "darkgreen"
 MAX_NUMBER_OF_CARDS_ON_TABLE        = 12 
 MAX_NUMBER_OF_CARDS_IN_SET          = 3
-MAX_NUMBER_OF_CARDS_IN_DECK         = 9
+MAX_NUMBER_OF_CARDS_IN_DECK         = 81
 CARD_WIDTH                          = 70  # px
 CARD_HEIGHT                         = 110 # px
 
 # Number of seconds to let player search for a set
-SEARCH_TIME_EASY                    = 5     # Temporary for testing, otherwise 30
+SEARCH_TIME_EASY                    = 30
 SEARCH_TIME_MEDIUM                  = 20
 SEARCH_TIME_HARD                    = 15
+# Number of sets found by player + pc to obtain level
+THRESHOLD_MEDIUM                    = 7
+THRESHOLD_HARD                      = 14
 
 # define colors as (RED, GREEN, BLUE) tuples
 WHITE                               = (255, 255, 255)
@@ -63,7 +66,8 @@ TABLE_POSITION_CARD2                = 17 # 2nd selected card
 TABLE_POSITION_CARD3                = 18 # 3th selected 
 TABLE_POSITION_YOUR_SCORE           = 19
 TABLE_POSITION_PC_SCORE             = 20
-TABLE_POSITION_TIME_REMAINING       = 21
+TABLE_POSITION_LEVEL                = 21
+TABLE_POSITION_TIME_REMAINING       = 22
 
 # Game states
 STATE_START                         = "start"
