@@ -53,12 +53,16 @@ class Table(Gameobject):
         self.cards.append(card)
 
     # This method replaces 3 cards, a given set-object, with cards from the deck.
-    def replace_cards(self,deck):
+    def draw_cards_from_deck(self,deck):
+        # Counter needed, because each next cards gets a slightly higher delay
+        card_sequence = 0
         for i in range(MAX_NUMBER_OF_CARDS_ON_TABLE):
+            # Checking all cards positions on the table
             if self.cards[i] == None and len(deck.cards) > 0:
+                # Get card from the deck to this table
                 self.cards[i]=deck.pop_card()
-                self.cards[i].move_effects.append((self.positions[TABLE_POSITION_DECK], self.positions[i], FPS/4, FPS+i*5))
-
-            # number_card=self.cards.index(set.cards[i])
-            # self.cards[number_card]=deck.pop_card()
-            # self.cards[number_card].image_rect.center = self.positions[number_card]
+                # Show a nice move effect
+                self.cards[i].move_effects.append((self.positions[TABLE_POSITION_DECK], self.positions[i], FPS/4,
+                                                   FPS+card_sequence*5))
+                # Update counter for the next card to replace
+                card_sequence += 1
