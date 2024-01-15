@@ -49,23 +49,23 @@ class Set(Gameobject):
             self.text_image = None
             # Clear the set
             self.cards.clear()
+            return
+        
         if self.is_valid_set_effect:
             if self.framecount >= self.delay:
                 # During this effect, show "Valid set!"
                 self.set_text(self.basic_font, "You found a valid SET!", self.positions[TABLE_POSITION_CARD2])
-            # self.text_rect.top = self.text_rect.top + CARD_HEIGHT/2 + self.text_rect.height/2
-            self.framecount += 1
+                self.text_rect.top = self.text_rect.top - CARD_HEIGHT/2 - self.text_rect.height/2
         elif self.is_invalid_set_effect:
             if self.framecount >= self.delay:
                 # During this effect, show "Not a valid set!"
                 self.set_text(self.basic_font, "This was NOT a valid SET!", self.positions[TABLE_POSITION_CARD2])
-            self.framecount += 1
         elif self.is_valid_set_for_pc_effect:
             if self.framecount >= self.delay:
                 # During this effect, show "Now I have a valid set!"
                 self.set_text(self.basic_font, "Now I have a valid SET!", self.positions[TABLE_POSITION_CARD2])
                 self.text_rect.top = self.text_rect.top + CARD_HEIGHT/2 + self.text_rect.height/2
-            self.framecount += 1
+        self.framecount += 1
 
 
     def valid_set_effect(self, steps, delay):
@@ -75,13 +75,38 @@ class Set(Gameobject):
         self.stop_framecount = steps + delay
         # Indicate the effect is on
         self.is_valid_set_effect = True
+        # Card 3 may still be moving from table to set, so delay card 1 and card 2
         for i in range(MAX_NUMBER_OF_CARDS_IN_SET):
-            if len(self.cards[i].move_effects) == 0:
-                delay = FPS/4
-            else:
-                delay = 0
-            self.cards[i].move_effects.append((self.positions[TABLE_POSITION_CARD1+i],
-                                                (WIDTH*3/4, HEIGHT+CARD_HEIGHT), 10, delay))
+            # Ensure this is not an empty slot
+            if self.cards[i] != None:
+                # If card 3 is running its "move from table to set" effect, it should have no delay
+                if self.cards[i].is_effect_running():
+                    delay = 0
+                else:
+                    # Other cards should wait until card 3 is in position
+                    delay = FPS/4
+                # Move cards to the bottom of the screen
+                self.cards[i].move_effects.append((self.positions[TABLE_POSITION_CARD1+i],
+                                                  (WIDTH*3/4, HEIGHT+CARD_HEIGHT), steps, delay))
+
+    def invalid_set_effect(self, steps, delay):
+        # Show the invalid set effect during N steps
+        self.framecount = 0
+        self.delay = delay
+        self.stop_framecount = steps + delay
+        # Indicate the effect is on
+        self.is_invalid_set_effect = True
+        
+        # Card 3 may still be moving from table to set, so delay card 1 and card 2
+        for i in range(MAX_NUMBER_OF_CARDS_IN_SET):
+            if self.cards[i] != None:
+                # If card 3 is running its "move from table to set" effect, it should have no delay
+                if self.cards[i].is_effect_running():
+                    delay = 0
+                else:
+                    # Other cards should wait until card 3 is in position
+                    delay = FPS/4
+                self.cards[i].move_effects.append((self.positions[TABLE_POSITION_CARD1+i], self.cards[i].from_position, steps, delay))
 
     def valid_set_for_pc_effect(self, steps, delay):
         # Show the valid set effect during N steps
@@ -90,33 +115,24 @@ class Set(Gameobject):
         self.stop_framecount = steps + delay
         # Indicate the effect is on
         self.is_valid_set_for_pc_effect = True
+        # Card 3 may still be moving from table to set, so delay card 1 and card 2
         for i in range(MAX_NUMBER_OF_CARDS_IN_SET):
-            if len(self.cards[i].move_effects) == 0:
-                delay = FPS/4
-            else:
-                delay = 0
-
-            # Start move effect on the last card in the set
-            self.cards[i].move_effects.append((self.positions[self.cards[i].from_position_number],
-                                       self.positions[TABLE_POSITION_CARD1 + i],
-                                       FPS/4, delay))
-            #self.cards[i].move_effect(self.positions[TABLE_POSITION_CARD1+i], (WIDTH*3/4, 0-CARD_HEIGHT), 10, delay)
-
-    def invalid_set_effect(self, steps, delay):
-        # Show the invalid set effect during N steps
-        self.framecount = 0
-        self.delay = delay
-        self.stop_framecount = steps+delay
-        # Indicate the effect is on
-        self.is_invalid_set_effect = True
-        for i in range(MAX_NUMBER_OF_CARDS_IN_SET):
-            if len(self.cards[i].move_effects) == 0:
-                delay = FPS/4
-            else:
-                delay = 0
-
+            # Ensure this is not an empty slot
             if self.cards[i] != None:
-                self.cards[i].move_effects.append((self.positions[TABLE_POSITION_CARD1+i], self.cards[i].from_position, 10, delay))
+                # If any card is running its "move card back from set to table" effect, it should have no delay
+                if self.cards[i].is_effect_running():
+                    delay = 0
+                else:
+                    # Other cards should wait until all cards have returned to the table
+                    delay = FPS/4
+                # # Move all cards from table to the set
+                # self.cards[i].move_effects.append((self.positions[self.cards[i].from_position_number],
+                #                         self.positions[TABLE_POSITION_CARD1 + i],
+                #                         FPS/4, delay))
+                # Then move all cards to the top of the screen. The amount of steps depends on the input
+                # and on the amount of frames that have been used by the previous effect and previous delay
+                self.cards[i].move_effects.append((self.positions[TABLE_POSITION_CARD1+i],
+                                                   (WIDTH*3/4, 0-CARD_HEIGHT), steps, delay))
 
     def pop_card(self):
         # This method removes a card from the set

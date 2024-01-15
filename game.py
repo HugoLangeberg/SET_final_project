@@ -135,7 +135,7 @@ class Game():
                 # Schedule nice move effect from deck to table position, each card with a slight delay
                 self.table.cards[i].move_effects.append((self.positions[TABLE_POSITION_DECK], self.positions[i], FPS/4, i*5))
             else:
-                # In case there are no cards, explicitly add None as empty placeholder
+                # In case there are no cards left in the deck, explicitly add None as empty placeholder
                 self.table.cards.append(None)
 
         # Other game objects
@@ -220,7 +220,7 @@ class Game():
                     self.event_MB_UP_rules()
 
     def event_MB_UP_playing(self, event):
-        if self.set.is_valid_set_effect or self.set.is_invalid_set_effect:
+        if self.set.is_valid_set_effect or self.set.is_invalid_set_effect or self.set.is_valid_set_for_pc_effect:
             # Ignore mouse clicks during effects
             return
         if self.is_game_over():
@@ -228,7 +228,7 @@ class Game():
 
         #Check if mouse click is on a card and return that card.
         card_number=self.which_card_is_selected(self.table,event.pos)
-        self.move_card_from_table_to_set(card_number)
+        self.move_card_from_table_to_set(card_number, 0)
         # Check if this card movement results in a full set of 3 cards (either valid or invalid)
         self.process_full_set()
 
@@ -249,10 +249,10 @@ class Game():
             if self.check_set(self.set.cards[0], self.set.cards[1], self.set.cards[2]):
                 # The player created a valid set
 
-                #Remove these cards from the table.
-                self.set.valid_set_effect(FPS, FPS/4)
+                # Card 3 takes FPS/4 steps to move to the SET. Use this delay for the other 2 cards in the set
+                self.set.valid_set_effect(2*FPS, FPS/4)
                 # Get 3 new cards from the deck (or less if the deck gets empty)
-                self.table.replace_cards(self.deck)
+                self.table.draw_cards_from_deck(self.deck)
                 # A point for the player
                 self.player_score+=1
                 # Adjust score on the screen
@@ -272,8 +272,11 @@ class Game():
             self.selected_cards=""
             self.card_string = ""
 
-    def move_card_from_table_to_set(self, card_number):
+    def move_card_from_table_to_set(self, card_number, delay):
         if card_number!=-1 and len(self.set.cards) < MAX_NUMBER_OF_CARDS_IN_SET:
+            # If the card is running its "move card back from set to table" effect, it should have no delay
+            if self.table.cards[card_number].is_effect_running():
+                delay = 0
             # Valid card 0...11 selected. Add the selected number 1....12 to the string
             self.selected_cards+= str(card_number+1)+ ", "
             # Get card from table and put it in the set
@@ -282,10 +285,31 @@ class Game():
             self.set.cards[-1].from_position_number = card_number
             # And also its position
             self.set.cards[-1].from_position = self.positions[card_number]
+
+
             # Start move effect on the last card in the set
             self.set.cards[-1].move_effects.append((self.positions[card_number],
                                            self.positions[TABLE_POSITION_CARD1 + len(self.set.cards) - 1],
-                                           FPS/4, 0))
+                                           FPS/4, delay))
+
+    def move_cards_from_set_to_table(self):
+        # Move all cards in the set back to the table
+        for i in range(len(self.set.cards)):
+            self.move_card_from_set_to_table(i)
+        # Clear the set
+        self.set.cards.clear()
+
+    def move_card_from_set_to_table(self, i):
+        # Move a card with index i in the set back to the table
+        if self.set.cards[i] != None:
+            delay = self.set.cards[i].calculate_delay()
+            card_number = self.set.cards[i].from_position_number
+            self.set.cards[i].from_position = self.positions[TABLE_POSITION_CARD1+i]
+            self.set.cards[i].to_position = self.positions[card_number]
+            self.table.cards[card_number] = self.set.cards[i]
+            # Schedule a nice move effect
+            self.table.cards[card_number].move_effects.append((self.set.cards[i].from_position,
+                                                                  self.set.cards[i].to_position, FPS/4, delay))
 
     def event_MB_UP_start(self):
         # Check which button is selected
@@ -323,67 +347,53 @@ class Game():
                                             self.positions[TABLE_POSITION_TIME_REMAINING])
         # If player has no time left, it's time for the PC
         if self.timer.counter == 0:
+            if self.set.is_invalid_set_effect or self.set.is_valid_set_effect:
+                # Ignore timer if player just finished a valid or invalid set. Wait for the next second
+                # Increase the seconds counter (to undo the decrement earlier)
+                self.timer.counter += 1
+                return
             # See if player already selected 1 or 2 cards
-            if {len(self.set.cards) > 0 and 
-                not self.set.is_invalid_set_effect and
-                not self.set.is_valid_set_effect and
-                not self.set.is_valid_set_for_pc_effect}:
+            if len(self.set.cards) > 0 and not self.set.is_invalid_set_effect and not self.set.is_valid_set_effect and not self.set.is_valid_set_for_pc_effect:
                 # First get the cards from set back to table.
-                for i in range(len(self.set.cards)):
-                    if self.set.cards[i] != None:
-                        card_number = self.set.cards[i].from_position_number
-                        self.table.cards[card_number] = self.set.cards[i]
-                        # Schedule a nice move effect
-                        self.table.cards[card_number].move_effects.append((self.positions[TABLE_POSITION_CARD1+i],
-                                                                  self.positions[card_number], 10, 0))
-                # Clear the set
+                self.move_cards_from_set_to_table()
+            # if len(self.table.cards) == MAX_NUMBER_OF_CARDS_ON_TABLE:
+            # Find all valid sets on the table
+            found_sets=self.find_sets(self.table)
+            if found_sets!=[]:
+                # At least 1 valid set was found
+                for i in range(MAX_NUMBER_OF_CARDS_IN_SET):
+                    # Get card_number of each card in the first found set
+                    card_number = self.table.cards.index(found_sets[0].cards[i])
+                    # Get that card from table and put it in the set
+                    self.move_card_from_table_to_set(card_number, FPS/4)
+                # Play nice effect to show that computer found a valid set
+                self.set.valid_set_for_pc_effect(FPS, FPS/4)
+                # Adjust score
+                self.computer_score+=1
+                # Set level, if appropriate
+                self.set_level()
+                # Update the score on the screen
+                self.pc_score_object.set_text(self.basic_font, "PC score: " + str(self.computer_score),
+                                                self.positions[TABLE_POSITION_PC_SCORE])
+                # Get new cards from the deck on the table
+                self.table.draw_cards_from_deck(self.deck)
+
+            else:
+                # No valid sets on the table
+                if self.is_game_over():
+                    # It's time to move to game over state
+                    return
+                # Create an empty set and move the first 3 cards from the table to that set
+                for i in range (MAX_NUMBER_OF_CARDS_IN_SET):
+                    self.move_card_from_table_to_set(i, FPS/4)
+                # Get 3 new cards from the deck on the table
+                self.table.draw_cards_from_deck(self.deck)
                 self.set.cards.clear()
-            if len(self.table.cards) == MAX_NUMBER_OF_CARDS_ON_TABLE:
-                # Find all valid sets on the table
-                found_sets=self.find_sets(self.table)
-                if found_sets!=[]:
-                    # At least 1 valid set was found
-                    for i in range(MAX_NUMBER_OF_CARDS_IN_SET):
-                        # Get card_number of each card in the first found set
-                        card_number = self.table.cards.index(found_sets[0].cards[i])
-                        # Get that card from table and put it in the set
-                        self.set.cards.append(self.table.pop_card(card_number))
-                        # Record where this card was on the table
-                        self.set.cards[-1].from_position_number = card_number
-                    # Play nice effect to show that computer found a valid set
-                    self.set.valid_set_for_pc_effect(FPS, 0)
-                    # Adjust score
-                    self.computer_score+=1
-                    # Set level, if appropriate
-                    self.set_level()
-                    # Update the score on the screen
-                    self.pc_score_object.set_text(self.basic_font, "PC score: " + str(self.computer_score),
-                                                  self.positions[TABLE_POSITION_PC_SCORE])
-                    # Get new cards from the deck on the table
-                    self.table.replace_cards(self.deck)
-
-                else:
-                    # No valid sets on the table
-
-                    if self.is_game_over():
-                        # It's time to move to game over state
-                        return
-                    # Create an empty set and move the first 3 cards from the table to that set
-                    self.set=Set(self.screen,"", self.basic_font, self.positions)
-                    for i in range (MAX_NUMBER_OF_CARDS_IN_SET):
-                        self.move_card_from_table_to_set(i)
-                    # self.set.invalid_set_effect(FPS/2, 0)
-                        # self.set.add_cards([self.table.cards[i]])
-                        # self.table.cards[i] = None
-                    # Get 3 new cards from the deck on the table
-                    self.table.replace_cards(self.deck)
-                    self.set.cards.clear()
             # Set timer back to the begin value
             self.timer.counter=self.timer.search_time 
             # Clear the string with selected cards and the single card_string
             self.selected_cards=""
             self.card_string = ""
-
 
     def set_level(self):
         # Set the level, depending on the total amount of found sets and update text accordingly
