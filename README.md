@@ -7,7 +7,7 @@ The game of SET
 This program to play the game of SET is designed to give the best player experience. It focusses on 
 a readable code, using object oriented programming, to play SET as well as possible. For this reason
 the code might not be te most elegant, or the most time efficient. But despite this, the game still runs
-perfectly without any bugs. 
+perfectly without any bugs. Created by Mark Lindhout, Koen Poorter and Hugo Langeberg.
 
 ## Table of Contents
 
